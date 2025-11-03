@@ -6,26 +6,93 @@ from modules.delay import delay
 from modules.display_function import display_function
 from modules.display_header import display_header
 from modules.display_line import display_line
+from modules.success_message import success_message
 from modules.error_message import error_message
 from modules.insert_spaces import insert_spaces
 from modules.line_delay_animation import line_delay_animation
 from modules.press_enter_to_continue import press_enter_to_continue
 
-# [IMPORT] Functions (image transformation)
-from functions import *
+# [IMPORT] Libraries
+from PIL import Image # for loading/saving images
+import numpy as np
 
 """ CLASS """
 class User:
     # Constructor
     def __init__(self, img_URL=""):
         self.img_URL = img_URL
+        self.img = None
 
-    # Getters & Setters
+    """ Getters & Setters """
     def get_img_URL(self):
         return self.img_URL
         
     def set_img_URL(self, img_URL):
         self.img_URL = img_URL
+
+    def get_img(self):
+        return self.img
+        
+    def set_img(self, img, img_URL):
+        self.img = img
+        self.img_URL = img_URL
+
+    """ Image Transformation """
+    def flip_image(self):
+        pass
+
+    def crop_image(self):
+        pass
+    def normalize_image(self):
+        pass
+
+    def threshold_binarize(self):
+        pass
+
+    def invert_colors(self):
+        pass
+
+    def blur_image(self):
+        pass
+
+    def sharpen_image(self):
+        pass
+
+    def edge_detect(self):
+        pass
+
+    def flatten_image(self):
+        pass
+
+    """ Load & Save Image """
+    def load_image(self):
+        while True:
+            img_URL = input("Enter image path or URL: ").strip()
+            try:
+                img = Image.open(img_URL)
+                self.set_img(img, img_URL)
+                success_message(f"Image {self.get_img_URL()} loaded!", 3)
+                break
+            except Exception as e:
+                error_message(f"Failed to load message, please try again", 3)
+
+    def save_image(self):
+        img = self.get_img()
+        if img is None:
+            error_message("No image loaded to save", 2)
+            return
+
+        save_path = input("Enter filename to save image (e.g., output.png): ").strip()
+        try:
+            img.save(save_path)
+            self.set_img_URL(save_path)
+            success_message(f"Image saved as {save_path}", 1)
+        except Exception as e:
+            error_message(f"Failed to save image: {e}", 2)
+
+
+    def exit_program(self):
+        exit(0)
 
 class Menu:
     def __init__(self):
@@ -70,10 +137,8 @@ class Menu:
 
                 # Call the method dynamically
                 method_name = self.function_list[user_choice][0]
-                if hasattr(self, method_name):        # class method
-                    getattr(self, method_name)()
-                elif method_name in globals():         # standalone function
-                    globals()[method_name](self.user)
+                if hasattr(self.user, method_name):
+                    getattr(self.user, method_name)()
                 else:
                     print(f"Function {method_name} not implemented yet.")
 
