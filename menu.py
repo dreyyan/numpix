@@ -16,7 +16,7 @@ from modules.press_enter_to_continue import press_enter_to_continue
 from PIL import Image # for loading/saving images
 import numpy as np
 
-""" CLASS """
+""" Classes """
 class User:
     # Constructor
     def __init__(self, img_URL=""):
@@ -39,7 +39,7 @@ class User:
         self.img_URL = img_URL
 
     """ Image Transformation """
-    # [FUNCTION: Transform] Flip image horizontally or vertically
+    # * [FUNCTION: Transform] Flip image horizontally or vertically
     def flip_image(self):
         img = self.get_img()
 
@@ -70,6 +70,7 @@ class User:
 
         # Update current image
         flipped_img = Image.fromarray(flipped_matrix)
+        success_message(f"Image '{self.get_img_URL()}' flipped successfully!", 1)
 
         # Save flipped image
         self.set_img(flipped_img, self.get_img_URL())
@@ -78,6 +79,7 @@ class User:
         self.save_image()
         press_enter_to_continue()
 
+    # * [FUNCTION: Transform] Crop image within a specified dimension
     def crop_image(self):
         img = self.get_img()
 
@@ -100,23 +102,27 @@ class User:
                 width = int(width_str)
                 height = int(height_str)
 
+                break
+
             except Exception as e:
                 error_message("Invalid input, please enter a valid dimension (e.g. 200 x 200)", 2)
                 return
 
-            # Crop matrix using specified width and height
-            cropped_matrix = matrix[0:height, 0:width]
+        # Crop matrix using specified width and height
+        cropped_matrix = matrix[0:height, 0:width]
 
-            # Update current image
-            cropped_img = Image.fromarray(cropped_matrix)
+        # Update current image
+        cropped_img = Image.fromarray(cropped_matrix)
+        success_message(f"Image '{self.get_img_URL()}' cropped successfully!", 1)
 
-            # Save cropped image
-            self.set_img(cropped_img, self.get_img_URL())
+        # Save cropped image
+        self.set_img(cropped_img, self.get_img_URL())
 
-            # Output saved image
-            self.save_image()
-            press_enter_to_continue()
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
 
+    # * [FUNCTION: Transform] Scale vectors' pixel values to [0, 1]
     def normalize_image(self):
         img = self.get_img()
 
@@ -136,18 +142,77 @@ class User:
         self.set_img(normalized_img, self.get_img_URL())
 
         # Save normalized matrix (for machine learning)
-        np.save(f"{self.get_img_URL}_normalized.npy", normalized_matrix)
-        success_message(f"Normalized image saved as {self.get_img_URL}.npy", 1)
+        np.save(f"{self.get_img_URL()}_normalized.npy", normalized_matrix)
+        success_message(f"Image '{self.get_img_URL()}' normalized successfully!", 1)
+        success_message(f"Normalized matrix saved as {self.get_img_URL()}.npy", 1)
 
         # Output saved image
         self.save_image()
         press_enter_to_continue()
 
-    def threshold_binarize(self):
-        pass
+    # * [FUNCTION: Transform] Apply threshold-based binarization (converting color values to either black or white)
+    def binarize(self):
+        img = self.get_img()
 
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+
+        # convert image to grayscale
+        img = Image.open("sample-image.jpg").convert("L")
+
+        # Prompt user to enter threshold
+        while True:
+            try:
+                input_threshold = int(input("Enter threshold for binarization (max.: 255): ").strip())
+
+                # [ERROR] Out-of-range threshold
+                if input_threshold < 0 or input_threshold > 255:
+                    error_message("Out of range, please enter a valid threshold (0-255)", 2)
+                else: break
+                
+            except Exception as e:
+                error_message("Invalid input, please enter a valid threshold (0-255)", 2)
+                return
+        
+        # Convert image to matrix
+        matrix = np.array(img)
+        binarized_matrix = np.where(matrix > input_threshold, 255, 0)
+
+        # Update current image
+        binarized_img = Image.fromarray(binarized_matrix.astype(np.uint8))
+
+        # Save binarized image
+        self.set_img(binarized_img, self.get_img_URL())
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
+
+
+    # * [FUNCTION: Transform] Invert color images
     def invert_colors(self):
-        pass
+        img = self.get_img()
+
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+
+        # Convert image to matrix
+        matrix = np.array(img)
+        inverted_matrix = 255 - matrix
+
+        # Update current image
+        inverted_img = Image.fromarray(inverted_matrix)
+
+        # Save color-inverted image
+        self.set_img(inverted_img, self.get_img_URL())
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
 
     def blur_image(self):
         pass
@@ -158,6 +223,7 @@ class User:
     def edge_detect(self):
         pass
 
+    # * [FUNCTION: Transform] Convert image to 1D vector
     def flatten_image(self):
         img = self.get_img()
 
@@ -178,7 +244,7 @@ class User:
 
         # Save flattened matrix (for machine learning)
         np.save(f"{self.get_img_URL()}_flattened.npy", flattened_matrix)
-        success_message(f"Flattened image saved as {self.get_img_URL()}.npy", 1)
+        success_message(f"Flattened matrix saved as {self.get_img_URL()}.npy", 1)
 
         reshaped_matrix = flattened_matrix.reshape(matrix.shape)
         display_img = Image.fromarray(reshaped_matrix)
@@ -232,7 +298,7 @@ class Menu:
             1: ('flip_image', 'Flip Image'),
             2: ('crop_image', 'Crop Image'),
             3: ('normalize_image', 'Normalize Image'),
-            4: ('threshold_binarize', 'Threshold / Binarize'),
+            4: ('binarize', 'Binarize'),
             5: ('invert_colors', 'Invert Colors'),
             6: ('blur_image', 'Blur Image'),
             7: ('sharpen_image', 'Sharpen Image'),
@@ -280,7 +346,7 @@ class Menu:
             except ValueError as e:
                 print(f"Invalid input: {e}")
 
-# [MAIN] Main method
+""" Main Method """
 if __name__ == '__main__':
     user = User('sample-image.jpg')
     init = Menu()
