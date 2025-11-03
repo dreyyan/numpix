@@ -118,7 +118,30 @@ class User:
             press_enter_to_continue()
 
     def normalize_image(self):
-        pass
+        img = self.get_img()
+
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+
+        # Convert image to matrix and normalize it
+        matrix = np.array(img).astype(np.float32)
+        normalized_matrix = matrix / 255.0
+
+        # Update current image
+        normalized_img = Image.fromarray(np.clip(normalized_matrix * 255, 0, 255).astype(np.uint8))
+
+        # Save flipped image
+        self.set_img(normalized_img, self.get_img_URL())
+
+        # Save normalized matrix (for machine learning)
+        np.save(f"{self.get_img_URL}_normalized.npy", normalized_matrix)
+        success_message(f"Normalized image saved as {self.get_img_URL}.npy", 1)
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
 
     def threshold_binarize(self):
         pass
@@ -136,7 +159,36 @@ class User:
         pass
 
     def flatten_image(self):
-        pass
+        img = self.get_img()
+
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+
+        # Convert image to matrix and flatten it
+        matrix = np.array(img)
+        flattened_matrix = matrix.flatten()
+        
+        # Update current image
+        normalized_img = Image.fromarray(flattened_matrix)
+
+        # Save flattened image
+        self.set_img(normalized_img, self.get_img_URL())
+
+        # Save flattened matrix (for machine learning)
+        np.save(f"{self.get_img_URL()}_flattened.npy", flattened_matrix)
+        success_message(f"Flattened image saved as {self.get_img_URL()}.npy", 1)
+
+        reshaped_matrix = flattened_matrix.reshape(matrix.shape)
+        display_img = Image.fromarray(reshaped_matrix)
+
+        # Save converted image from flattened 1D vector
+        self.set_img(normalized_img, self.get_img_URL())
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
 
     """ Load & Save Image """
     # [FUNCTION]: Load image via path or URL
