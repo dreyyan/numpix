@@ -21,7 +21,8 @@ class User:
     # Constructor
     def __init__(self, img_URL=""):
         self.img_URL = img_URL
-        self.img = None
+        img = Image.open(img_URL)
+        self.set_img(img, img_URL)
 
     """ Getters & Setters """
     def get_img_URL(self):
@@ -38,11 +39,84 @@ class User:
         self.img_URL = img_URL
 
     """ Image Transformation """
+    # [FUNCTION: Transform] Flip image horizontally or vertically
     def flip_image(self):
-        pass
+        img = self.get_img()
+
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+        
+        # Convert image to matrix
+        matrix = np.array(self.get_img())
+
+        # Prompt user to flip image horizontally or vertically
+        while True:
+            user_input = input("Flip [H]orizontal or [V]ertical?: ").strip()
+            if user_input.lower() not in ['h', 'v']:
+                error_message("Invalid input, please enter 'H' to flip horizontally or 'V' to flip vertically", 2)
+            else: break
+
+        user_input = user_input[0]
+
+        # Flip based on user input
+        if user_input[0] == 'h':
+            # Flip the matrix horizontally
+            flipped_matrix = np.fliplr(matrix)
+        elif user_input[0] == 'v':
+            # Flip the matrix vertically
+            flipped_matrix = np.flipud(matrix)
+
+        # Update current image
+        flipped_img = Image.fromarray(flipped_matrix)
+
+        # Save flipped image
+        self.set_img(flipped_img, self.get_img_URL())
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
 
     def crop_image(self):
-        pass
+        img = self.get_img()
+
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+        
+        # Prompt user to enter dimensions to crop
+        while True:
+            # Convert image to matrix
+            matrix = np.array(self.get_img())
+            print(f"Image Dimensions: {matrix.shape[0]} x {matrix.shape[1]}")
+
+            try:
+                input_dimensions = input("Enter dimension (e.g. 200 x 200): ").strip()
+
+                width_str, height_str = [s.strip() for s in input_dimensions.lower().split('x')]
+                
+                width = int(width_str)
+                height = int(height_str)
+
+            except Exception as e:
+                error_message("Invalid input, please enter a valid dimension (e.g. 200 x 200)", 2)
+                return
+
+            # Crop matrix using specified width and height
+            cropped_matrix = matrix[0:height, 0:width]
+
+            # Update current image
+            cropped_img = Image.fromarray(cropped_matrix)
+
+            # Save cropped image
+            self.set_img(cropped_img, self.get_img_URL())
+
+            # Output saved image
+            self.save_image()
+            press_enter_to_continue()
+
     def normalize_image(self):
         pass
 
@@ -65,6 +139,7 @@ class User:
         pass
 
     """ Load & Save Image """
+    # [FUNCTION]: Load image via path or URL
     def load_image(self):
         while True:
             img_URL = input("Enter image path or URL: ").strip()
@@ -76,20 +151,23 @@ class User:
             except Exception as e:
                 error_message(f"Failed to load message, please try again", 3)
 
+    # [FUNCTION]: Save the image output
     def save_image(self):
         img = self.get_img()
         if img is None:
             error_message("No image loaded to save", 2)
             return
 
-        save_path = input("Enter filename to save image (e.g., output.png): ").strip()
+        save_path = input("Enter filename to save image (default: output.png): ").strip()
         try:
+            if save_path == '':
+                save_path = "output.png"
+            else:
+                self.set_img_URL(save_path)
             img.save(save_path)
-            self.set_img_URL(save_path)
             success_message(f"Image saved as {save_path}", 1)
         except Exception as e:
             error_message(f"Failed to save image: {e}", 2)
-
 
     def exit_program(self):
         exit(0)
@@ -121,13 +199,13 @@ class Menu:
             index: int = 1 # to keep track of the current function index
 
             # Display UI
-            line_delay_animation("`~`~`~ [ NumPix ] ~`~`~`", 0.1)
-            display_format('#', 28)
+            line_delay_animation("  `~`~`~ [ NumPix ] ~`~`~`", 0.1)
+            display_format('#', 27)
 
             # Dynamically display list of operations
             for index, (function_name, description) in self.function_list.items():
-                line_delay_animation(f"{' ' if index < 10 else ''}[{index}] | {description}", 0.1)
-            display_format('#', 28)
+                line_delay_animation(f"{' ' if index < 10 else ''}[{index}] | {description}", 0.05)
+            display_format('#', 27)
 
             try:
                 user_choice = int(input(">> ").strip())
@@ -137,16 +215,21 @@ class Menu:
 
                 # Call the method dynamically
                 method_name = self.function_list[user_choice][0]
+                method_description = self.function_list[user_choice][1]
+
                 if hasattr(self.user, method_name):
+                    # Clear screen and display header
+                    clear_screen()
+                    display_header("NumPix", method_description, '#', 12, False)
                     getattr(self.user, method_name)()
                 else:
-                    print(f"Function {method_name} not implemented yet.")
+                    print(f"Function {method_name} unknown.")
 
             except ValueError as e:
                 print(f"Invalid input: {e}")
 
 # [MAIN] Main method
 if __name__ == '__main__':
-    user = User()
+    user = User('sample-image.jpg')
     init = Menu()
     init.display_main_menu()
