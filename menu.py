@@ -1,14 +1,11 @@
 # [IMPORT] Utilities
-from modules.character_delay_animation import character_delay_animation
 from modules.clear_screen import clear_screen
 from modules.display_format import display_format
 from modules.delay import delay
-from modules.display_function import display_function
 from modules.display_header import display_header
 from modules.display_line import display_line
 from modules.success_message import success_message
 from modules.error_message import error_message
-from modules.insert_spaces import insert_spaces
 from modules.line_delay_animation import line_delay_animation
 from modules.press_enter_to_continue import press_enter_to_continue
 
@@ -257,7 +254,7 @@ class User:
         press_enter_to_continue()
 
     """ Load & Save Image """
-    # [FUNCTION]: Load image via path or URL
+    # * [FUNCTION]: Load image via path or URL
     def load_image(self):
         while True:
             img_URL = input("Enter image path or URL: ").strip()
@@ -269,7 +266,7 @@ class User:
             except Exception as e:
                 error_message(f"Failed to load message, please try again", 3)
 
-    # [FUNCTION]: Save the image output
+    # * [FUNCTION]: Save the image output
     def save_image(self):
         img = self.get_img()
         if img is None:
