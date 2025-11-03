@@ -183,6 +183,8 @@ class User:
         # Save binarized image
         self.set_img(binarized_img, self.get_img_URL())
 
+        success_message(f"Image '{self.get_img_URL()}' binarized successfully!", 1)
+
         # Output saved image
         self.save_image()
         press_enter_to_continue()
@@ -211,14 +213,157 @@ class User:
         self.save_image()
         press_enter_to_continue()
 
+    # * [FUNCTION: Transform] Blur images using kernel
     def blur_image(self):
-        pass
+        img = self.get_img()
 
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to flip", 2)
+            return
+        
+        # Prompt user to enter blur radius
+        while True:
+            try:
+                input_blur_radius = int(input("Enter blur radius (max.: 25): ").strip())
+
+                # [ERROR] Out-of-range blur radius
+                if input_blur_radius < 1 or input_blur_radius > 25:
+                    error_message("Out of range, please enter a valid blur radius in px (1-25)", 2)
+                else: break
+                
+            except Exception as e:
+                error_message("Invalid input, please enter a valid blur radius in px (1-25)", 2)
+                return
+
+        # Convert image to matrix
+        matrix = np.array(img)
+
+        # Set kernel size and kernel
+        kernel_size = input_blur_radius * 2 + 1
+        kernel = np.ones((kernel_size, kernel_size)) / (kernel_size ** 2)
+        pad = input_blur_radius
+
+        # Pad image to prevent size shrinkage
+        padded = np.pad(matrix, ((pad, pad), (pad, pad), (0, 0)), mode='edge')
+        blurred = np.zeros_like(matrix)
+
+        # Convolution (slow but educational)
+        for y in range(matrix.shape[0]):
+            for x in range(matrix.shape[1]):
+                for c in range(matrix.shape[2]):
+                    region = padded[y:y+kernel_size, x:x+kernel_size, c]
+                    blurred[y, x, c] = np.sum(region * kernel)
+
+        # Update current image
+        blurred_img = Image.fromarray(blurred.astype(np.uint8))
+
+        # Save blurred image
+        self.set_img(blurred_img, self.get_img_URL())
+
+        success_message(f"Image '{self.get_img_URL()}' blurred successfully!", 1)
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
+
+    # * [FUNCTION: Transform] Sharpen image
     def sharpen_image(self):
-        pass
+        img = self.get_img()
 
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to sharpen", 2)
+            return
+
+        # Convert image to numpy array
+        matrix = np.array(img, dtype=np.float32)
+
+        # Define sharpening kernel
+        kernel = np.array([
+            [0, -1, 0],
+            [-1, 5, -1],
+            [0, -1, 0]
+        ], dtype=np.float32)
+
+        # Padding to avoid border shrinkage
+        pad = 1
+        padded = np.pad(matrix, ((pad, pad), (pad, pad), (0, 0)), mode='edge')
+        sharpened = np.zeros_like(matrix)
+
+        # Convolution
+        for y in range(matrix.shape[0]):
+            for x in range(matrix.shape[1]):
+                for c in range(matrix.shape[2]):
+                    region = padded[y:y+3, x:x+3, c]
+                    sharpened[y, x, c] = np.sum(region * kernel)
+
+        # Clip values to 0–255 and convert back to uint8
+        sharpened = np.clip(sharpened, 0, 255)
+        sharpened_img = Image.fromarray(sharpened.astype(np.uint8))
+
+        # Save sharpened image
+        self.set_img(sharpened_img, self.get_img_URL())
+        
+        success_message(f"Image '{self.get_img_URL()}' sharpened successfully!", 1)
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
+
+    # * [FUNCTION: Transform] Detect image edges
     def edge_detect(self):
-        pass
+        img = self.get_img()
+
+        # [ERROR] No image loaded
+        if img is None:
+            error_message("No image loaded to detect edges", 2)
+            return
+
+        # Convert image to grayscale for edge detection
+        gray = np.array(img.convert('L'), dtype=np.float32)
+
+        # Sobel kernels
+        Kx = np.array([
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+        ], dtype=np.float32)
+
+        Ky = np.array([
+            [-1, -2, -1],
+            [0,  0,  0],
+            [1,  2,  1]
+        ], dtype=np.float32)
+
+        # Padding
+        pad = 1
+        padded = np.pad(gray, ((pad, pad), (pad, pad)), mode='edge')
+        Gx = np.zeros_like(gray)
+        Gy = np.zeros_like(gray)
+
+        # Convolution
+        for y in range(gray.shape[0]):
+            for x in range(gray.shape[1]):
+                region = padded[y:y+3, x:x+3]
+                Gx[y, x] = np.sum(region * Kx)
+                Gy[y, x] = np.sum(region * Ky)
+
+        # Compute edge magnitude
+        edges = np.sqrt(Gx**2 + Gy**2)
+
+        # Normalize to 0–255
+        edges = np.clip(edges / edges.max() * 255, 0, 255)
+        edges_img = Image.fromarray(edges.astype(np.uint8))
+
+        # Save edge-detected image
+        self.set_img(edges_img, self.get_img_URL())
+
+        success_message(f"Edges detected for '{self.get_img_URL()}' successfully!", 1)
+
+        # Output saved image
+        self.save_image()
+        press_enter_to_continue()
 
     # * [FUNCTION: Transform] Convert image to 1D vector
     def flatten_image(self):
@@ -234,20 +379,20 @@ class User:
         flattened_matrix = matrix.flatten()
         
         # Update current image
-        normalized_img = Image.fromarray(flattened_matrix)
+        flattened_img = Image.fromarray(flattened_matrix)
 
         # Save flattened image
-        self.set_img(normalized_img, self.get_img_URL())
+        self.set_img(flattened_img, self.get_img_URL())
 
         # Save flattened matrix (for machine learning)
         np.save(f"{self.get_img_URL()}_flattened.npy", flattened_matrix)
         success_message(f"Flattened matrix saved as {self.get_img_URL()}.npy", 1)
 
         reshaped_matrix = flattened_matrix.reshape(matrix.shape)
-        display_img = Image.fromarray(reshaped_matrix)
+        flattened_img = Image.fromarray(reshaped_matrix)
 
         # Save converted image from flattened 1D vector
-        self.set_img(normalized_img, self.get_img_URL())
+        self.set_img(flattened_img, self.get_img_URL())
 
         # Output saved image
         self.save_image()
